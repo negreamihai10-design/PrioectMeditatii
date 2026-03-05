@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { GraduationCap, Menu, X } from 'lucide-react';
+import { GraduationCap, Menu, X, LogIn } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 const navLinks = [
   { label: 'Materii', href: '/materii' },
   { label: 'Cum functioneaza', href: '/#cum-functioneaza' },
   { label: 'Profesori', href: '/#profesori' },
   { label: 'Testimoniale', href: '/#testimoniale' },
+  { label: 'Devino Profesor', href: '/inscriere-profesor' },
+  { label: 'Devino Elev', href: '/inscriere-elev' },
 ];
 
 export default function Header() {
@@ -14,6 +17,7 @@ export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const isHome = location.pathname === '/';
+  const { user, signOut, openLogin } = useAuth();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -27,6 +31,17 @@ export default function Header() {
 
   const showSolid = scrolled || !isHome;
 
+  const linkClass = (isActive: boolean) =>
+    `px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+      isActive
+        ? showSolid
+          ? 'text-primary-700 bg-primary-50'
+          : 'text-white bg-white/10'
+        : showSolid
+          ? 'text-gray-600 hover:text-primary-700 hover:bg-primary-50'
+          : 'text-white/80 hover:text-white hover:bg-white/10'
+    }`;
+
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
@@ -37,7 +52,14 @@ export default function Header() {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 lg:h-20">
-          <Link to="/" className="flex items-center gap-2 group">
+          <a
+            href="/"
+            onClick={(e) => {
+              e.preventDefault();
+              window.location.href = '/';
+            }}
+            className="flex items-center gap-2 group"
+          >
             <div className={`p-2 rounded-xl transition-colors duration-300 ${
               showSolid ? 'bg-primary-600' : 'bg-white/20 backdrop-blur-sm'
             }`}>
@@ -48,21 +70,18 @@ export default function Header() {
             }`}>
               Meditatii<span className="text-accent-400">Pro</span>
             </span>
-          </Link>
+          </a>
 
           <nav className="hidden lg:flex items-center gap-1">
             {navLinks.map((link) => {
               const isRouterLink = !link.href.includes('#');
+              const isActive = location.pathname === link.href;
               if (isRouterLink) {
                 return (
                   <Link
                     key={link.href}
                     to={link.href}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                      showSolid
-                        ? 'text-gray-600 hover:text-primary-700 hover:bg-primary-50'
-                        : 'text-white/80 hover:text-white hover:bg-white/10'
-                    }`}
+                    className={linkClass(isActive)}
                   >
                     {link.label}
                   </Link>
@@ -72,22 +91,33 @@ export default function Header() {
                 <a
                   key={link.href}
                   href={link.href}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    showSolid
-                      ? 'text-gray-600 hover:text-primary-700 hover:bg-primary-50'
-                      : 'text-white/80 hover:text-white hover:bg-white/10'
-                  }`}
+                  className={linkClass(false)}
                 >
                   {link.label}
                 </a>
               );
             })}
-            <Link
-              to="/inscriere-profesor"
-              className="ml-4 px-5 py-2.5 bg-accent-500 hover:bg-accent-600 text-white text-sm font-semibold rounded-xl transition-all duration-200 hover:shadow-lg hover:shadow-accent-500/25"
-            >
-              Devino profesor
-            </Link>
+
+            {user ? (
+              <button
+                onClick={signOut}
+                className={`ml-3 px-5 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 ${
+                  showSolid
+                    ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    : 'bg-white/10 text-white hover:bg-white/20'
+                }`}
+              >
+                Deconectare
+              </button>
+            ) : (
+              <button
+                onClick={openLogin}
+                className="ml-3 inline-flex items-center gap-2 px-5 py-2.5 bg-accent-500 hover:bg-accent-600 text-white text-sm font-semibold rounded-xl transition-all duration-200 hover:shadow-lg hover:shadow-accent-500/25"
+              >
+                <LogIn className="w-4 h-4" />
+                Log In
+              </button>
+            )}
           </nav>
 
           <button
@@ -127,12 +157,23 @@ export default function Header() {
                 </a>
               );
             })}
-            <Link
-              to="/inscriere-profesor"
-              className="block mt-3 px-4 py-3 bg-accent-500 hover:bg-accent-600 text-white text-center font-semibold rounded-xl transition-colors"
-            >
-              Devino profesor
-            </Link>
+
+            {user ? (
+              <button
+                onClick={signOut}
+                className="block w-full mt-3 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 text-center font-semibold rounded-xl transition-colors"
+              >
+                Deconectare
+              </button>
+            ) : (
+              <button
+                onClick={() => { setMobileOpen(false); openLogin(); }}
+                className="flex items-center justify-center gap-2 w-full mt-3 px-4 py-3 bg-accent-500 hover:bg-accent-600 text-white text-center font-semibold rounded-xl transition-colors"
+              >
+                <LogIn className="w-4 h-4" />
+                Log In
+              </button>
+            )}
           </div>
         </div>
       )}

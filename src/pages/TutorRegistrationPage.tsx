@@ -8,7 +8,6 @@ import {
   Calendar,
   Briefcase,
 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
 import { useSubjects } from '../hooks/useSubjects';
 import {
   ALL_CITIES,
@@ -163,34 +162,51 @@ export default function TutorRegistrationPage() {
     e.preventDefault();
     setStatus('loading');
 
-    const { error } = await supabase.from('tutor_applications').insert({
-      name: form.name,
-      email: form.email,
-      phone: form.phone,
-      city: form.city,
-      bio: form.bio,
-      experience: form.experience,
-      education: form.education,
-      subject_ids: form.subjectIds,
-      specialties: form.specialties
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean),
-      mode: form.mode,
-      session_type: form.sessionType,
-      price: form.price,
-      days: form.days,
-      hours: form.hours,
-      levels: form.levels,
-    });
+    const subjectNames = subjects
+      .filter((s) => form.subjectIds.includes(s.id))
+      .map((s) => s.name);
 
-    if (error) {
+    const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-tutor-application`;
+
+    try {
+      const res = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+          phone: form.phone,
+          city: form.city,
+          bio: form.bio,
+          experience: form.experience,
+          education: form.education,
+          subjects: subjectNames,
+          specialties: form.specialties
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean),
+          mode: form.mode,
+          sessionType: form.sessionType,
+          price: form.price,
+          days: form.days,
+          hours: form.hours,
+          levels: form.levels,
+        }),
+      });
+
+      if (!res.ok) {
+        setStatus('error');
+        return;
+      }
+
+      setStatus('success');
+      setForm(emptyForm);
+    } catch {
       setStatus('error');
-      return;
     }
-
-    setStatus('success');
-    setForm(emptyForm);
   };
 
   if (status === 'success') {

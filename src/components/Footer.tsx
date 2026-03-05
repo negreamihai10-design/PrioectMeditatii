@@ -91,6 +91,11 @@ export default function Footer() {
                   Inscriere profesor
                 </Link>
               </li>
+              <li>
+                <Link to="/inscriere-elev" className="text-sm hover:text-primary-400 transition-colors">
+                  Inscriere elev
+                </Link>
+              </li>
             </ul>
           </div>
 
