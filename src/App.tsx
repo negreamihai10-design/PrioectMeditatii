@@ -11,6 +11,7 @@ import StudentRegistrationPage from './pages/StudentRegistrationPage';
 import TutorProfilePage from './pages/TutorProfilePage';
 import CreditsPage from './pages/CreditsPage';
 import CheckoutPage from './pages/CheckoutPage';
+import PromotionPage from './pages/PromotionPage';
 import ScrollToTop from './components/ScrollToTop';
 
 export default function App() {
@@ -29,6 +30,7 @@ export default function App() {
           <Route path="/profil" element={<TutorProfilePage />} />
           <Route path="/credite" element={<CreditsPage />} />
           <Route path="/credite/plata" element={<CheckoutPage />} />
+          <Route path="/promovare" element={<PromotionPage />} />
         </Routes>
         <Footer />
       </div>

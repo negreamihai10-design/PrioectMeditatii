@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { GraduationCap, Menu, X, LogIn, User, Coins } from 'lucide-react';
+import { GraduationCap, Menu, X, LogIn, User, Coins, Megaphone } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useCreditBalance } from '../hooks/useCredits';
 
 const publicLinks = [
   { label: 'Materii', href: '/materii' },
@@ -21,6 +22,7 @@ export default function Header() {
   const location = useLocation();
   const isHome = location.pathname === '/';
   const { user, role, signOut, openLogin } = useAuth();
+  const creditBalance = useCreditBalance(user?.id, role);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -46,7 +48,11 @@ export default function Header() {
     }`;
 
   const visiblePublicLinks = role === 'tutor'
-    ? publicLinks.filter((l) => l.href !== '/#cum-functioneaza' && l.href !== '/#testimoniale')
+    ? publicLinks.filter((l) =>
+        l.href !== '/#cum-functioneaza' &&
+        l.href !== '/#testimoniale' &&
+        l.href !== '/materii'
+      )
     : publicLinks;
 
   const navLinks = [
@@ -58,6 +64,7 @@ export default function Header() {
     ? [
         { label: 'Profilul Meu', href: '/profil', icon: User },
         { label: 'Credite', href: '/credite', icon: Coins },
+        { label: 'Promovare', href: '/promovare', icon: Megaphone },
       ]
     : [];
 
@@ -126,6 +133,17 @@ export default function Header() {
               </Link>
             ))}
 
+            {role === 'tutor' && (
+              <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold ${
+                showSolid
+                  ? 'bg-accent-50 text-accent-700 border border-accent-200'
+                  : 'bg-white/10 text-accent-300 border border-white/10'
+              }`}>
+                <Coins className="w-3.5 h-3.5" />
+                {creditBalance}
+              </div>
+            )}
+
             {user ? (
               <button
                 onClick={signOut}
@@ -174,6 +192,13 @@ export default function Header() {
                 {link.label}
               </Link>
             ))}
+
+            {role === 'tutor' && (
+              <div className="flex items-center gap-2 px-4 py-3 text-accent-700 bg-accent-50 rounded-lg font-bold text-sm">
+                <Coins className="w-4 h-4" />
+                {creditBalance} credite
+              </div>
+            )}
 
             {user ? (
               <button

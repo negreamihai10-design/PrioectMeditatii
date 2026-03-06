@@ -7,17 +7,25 @@ import {
   Languages,
   Palette,
   Music,
+  GraduationCap,
+  Sigma,
+  Microscope,
+  Code2,
+  PenTool,
+  Globe,
+  BookMarked,
+  Piano,
 } from 'lucide-react';
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-  Calculator,
+  Calculator: Sigma,
   Atom,
-  FlaskConical,
-  Monitor,
-  BookOpen,
-  Languages,
-  Palette,
-  Music,
+  FlaskConical: Microscope,
+  Monitor: Code2,
+  BookOpen: BookMarked,
+  Languages: Globe,
+  Palette: PenTool,
+  Music: Piano,
 };
 
 interface Props {
@@ -26,7 +34,6 @@ interface Props {
 }
 
 export default function SubjectIcon({ icon, className = 'w-7 h-7' }: Props) {
-  const Icon = iconMap[icon];
-  if (!Icon) return null;
+  const Icon = iconMap[icon] ?? GraduationCap;
   return <Icon className={className} />;
 }
