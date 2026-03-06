@@ -228,6 +228,40 @@ export default function TutorRegistrationPage() {
       return;
     }
 
+    const specialtiesList = form.specialties
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    const { error: tutorError } = await supabase.from('tutors').insert({
+      id: authData.user.id,
+      name: form.name,
+      bio: form.bio,
+      experience: form.experience,
+      location: form.city,
+      city: form.city,
+      rating: 0,
+      reviews: 0,
+      image: '',
+      specialties: specialtiesList,
+      price: form.price,
+      mode: form.mode,
+      days: form.days,
+      hours: form.hours,
+      levels: form.levels,
+      session_type: form.sessionType,
+      is_featured: false,
+    });
+
+    if (!tutorError && form.subjectIds.length > 0) {
+      await supabase.from('tutor_subjects').insert(
+        form.subjectIds.map((sid) => ({
+          tutor_id: authData.user.id,
+          subject_id: sid,
+        }))
+      );
+    }
+
     const subjectNames = subjects
       .filter((s) => form.subjectIds.includes(s.id))
       .map((s) => s.name);
