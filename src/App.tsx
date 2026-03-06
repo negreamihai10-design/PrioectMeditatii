@@ -8,6 +8,8 @@ import SubjectsPage from './pages/SubjectsPage';
 import SubjectDetailPage from './pages/SubjectDetailPage';
 import TutorRegistrationPage from './pages/TutorRegistrationPage';
 import StudentRegistrationPage from './pages/StudentRegistrationPage';
+import TutorProfilePage from './pages/TutorProfilePage';
+import CreditsPage from './pages/CreditsPage';
 import ScrollToTop from './components/ScrollToTop';
 
 export default function App() {
@@ -23,6 +25,8 @@ export default function App() {
           <Route path="/materii/:slug" element={<SubjectDetailPage />} />
           <Route path="/inscriere-profesor" element={<TutorRegistrationPage />} />
           <Route path="/inscriere-elev" element={<StudentRegistrationPage />} />
+          <Route path="/profil" element={<TutorProfilePage />} />
+          <Route path="/credite" element={<CreditsPage />} />
         </Routes>
         <Footer />
       </div>

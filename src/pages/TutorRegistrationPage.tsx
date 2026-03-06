@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Send,
   CheckCircle,
@@ -8,6 +9,7 @@ import {
   Calendar,
   Briefcase,
 } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 import { useSubjects } from '../hooks/useSubjects';
 import {
   ALL_CITIES,
@@ -20,6 +22,8 @@ import type { SubjectRow } from '../types/database';
 interface FormData {
   name: string;
   email: string;
+  password: string;
+  confirmPassword: string;
   phone: string;
   city: string;
   bio: string;
@@ -38,6 +42,8 @@ interface FormData {
 const emptyForm: FormData = {
   name: '',
   email: '',
+  password: '',
+  confirmPassword: '',
   phone: '',
   city: '',
   bio: '',
@@ -147,9 +153,11 @@ const inputClass =
   'w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all';
 
 export default function TutorRegistrationPage() {
+  const navigate = useNavigate();
   const { subjects } = useSubjects();
   const [form, setForm] = useState<FormData>(emptyForm);
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [errorMsg, setErrorMsg] = useState('');
 
   const set = (field: keyof FormData) => (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -160,16 +168,73 @@ export default function TutorRegistrationPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMsg('');
+
+    if (form.password !== form.confirmPassword) {
+      setErrorMsg('Parolele nu coincid.');
+      return;
+    }
+
+    if (form.password.length < 6) {
+      setErrorMsg('Parola trebuie sa aiba cel putin 6 caractere.');
+      return;
+    }
+
     setStatus('loading');
+
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: form.email,
+      password: form.password,
+      options: {
+        data: { role: 'tutor' },
+      },
+    });
+
+    if (authError || !authData.user) {
+      setErrorMsg(
+        authError?.message === 'User already registered'
+          ? 'Exista deja un cont cu acest email.'
+          : 'A aparut o eroare la crearea contului. Incearca din nou.'
+      );
+      setStatus('error');
+      return;
+    }
+
+    const { error: profileError } = await supabase.from('tutor_profiles').insert({
+      id: authData.user.id,
+      name: form.name,
+      email: form.email,
+      phone: form.phone,
+      city: form.city,
+      bio: form.bio,
+      experience: form.experience,
+      education: form.education,
+      subject_ids: form.subjectIds,
+      specialties: form.specialties
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean),
+      mode: form.mode,
+      session_type: form.sessionType,
+      price: form.price,
+      days: form.days,
+      hours: form.hours,
+      levels: form.levels,
+    });
+
+    if (profileError) {
+      setErrorMsg('Contul a fost creat, dar profilul nu a putut fi salvat. Contacteaza suportul.');
+      setStatus('error');
+      return;
+    }
 
     const subjectNames = subjects
       .filter((s) => form.subjectIds.includes(s.id))
       .map((s) => s.name);
 
     const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-tutor-application`;
-
     try {
-      const res = await fetch(apiUrl, {
+      await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
@@ -196,17 +261,12 @@ export default function TutorRegistrationPage() {
           levels: form.levels,
         }),
       });
-
-      if (!res.ok) {
-        setStatus('error');
-        return;
-      }
-
-      setStatus('success');
-      setForm(emptyForm);
     } catch {
-      setStatus('error');
+      // email notification is best-effort
     }
+
+    setStatus('success');
+    setForm(emptyForm);
   };
 
   if (status === 'success') {
@@ -240,20 +300,19 @@ export default function TutorRegistrationPage() {
                 <CheckCircle className="w-10 h-10 text-emerald-600" />
               </div>
               <h2 className="text-3xl font-extrabold text-gray-900 mb-4">
-                Aplicatia a fost trimisa!
+                Contul tau a fost creat!
               </h2>
               <p className="text-lg text-gray-500 leading-relaxed mb-3">
-                Multumim pentru interesul tau de a deveni profesor pe MeditatiiPro.
+                Bine ai venit pe MeditatiiPro. Esti acum conectat ca profesor.
               </p>
               <p className="text-gray-500 leading-relaxed">
-                Echipa noastra va analiza datele tale si te va contacta in cel mult
-                48 de ore la adresa de email sau numarul de telefon furnizat.
+                Poti sa iti completezi profilul, sa adaugi o poza de profil si sa incepi sa primesti elevi.
               </p>
               <button
-                onClick={() => setStatus('idle')}
+                onClick={() => navigate('/profil')}
                 className="mt-8 inline-flex items-center gap-2 px-8 py-4 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-2xl transition-all duration-300 hover:shadow-xl hover:shadow-primary-600/25"
               >
-                Trimite o alta aplicatie
+                Mergi la profilul tau
               </button>
             </div>
           </div>
@@ -287,8 +346,7 @@ export default function TutorRegistrationPage() {
             Inscrie-te ca profesor
           </h1>
           <p className="mt-4 text-lg text-primary-100/80 max-w-2xl mx-auto leading-relaxed">
-            Completeaza formularul de mai jos cu datele tale si te vom contacta
-            pentru a te adauga pe platforma. Procesul dureaza cel mult 48 de ore.
+            Creeaza-ti contul, completeaza profilul si incepe sa predai pe MeditatiiPro.
           </p>
         </div>
       </section>
@@ -297,7 +355,7 @@ export default function TutorRegistrationPage() {
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <form onSubmit={handleSubmit} className="space-y-8">
             <div className="bg-white rounded-3xl p-8 lg:p-10 shadow-sm border border-gray-100">
-              <StepBadge step={1} label="Date personale" icon={User} />
+              <StepBadge step={1} label="Date personale si cont" icon={User} />
               <div className="space-y-5">
                 <div>
                   <label htmlFor="reg-name" className="block text-sm font-medium text-gray-700 mb-1.5">
@@ -340,6 +398,37 @@ export default function TutorRegistrationPage() {
                       value={form.phone}
                       onChange={set('phone')}
                       placeholder="07xx xxx xxx"
+                      className={inputClass}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div>
+                    <label htmlFor="reg-password" className="block text-sm font-medium text-gray-700 mb-1.5">
+                      Parola *
+                    </label>
+                    <input
+                      id="reg-password"
+                      type="password"
+                      required
+                      value={form.password}
+                      onChange={set('password')}
+                      placeholder="Minim 6 caractere"
+                      className={inputClass}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="reg-confirm" className="block text-sm font-medium text-gray-700 mb-1.5">
+                      Confirma parola *
+                    </label>
+                    <input
+                      id="reg-confirm"
+                      type="password"
+                      required
+                      value={form.confirmPassword}
+                      onChange={set('confirmPassword')}
+                      placeholder="Repeta parola"
                       className={inputClass}
                     />
                   </div>
@@ -539,11 +628,11 @@ export default function TutorRegistrationPage() {
               </div>
             </div>
 
-            {status === 'error' && (
+            {(status === 'error' || errorMsg) && (
               <div className="flex items-center gap-2 p-4 bg-red-50 text-red-700 rounded-xl">
                 <AlertCircle className="w-5 h-5 flex-shrink-0" />
                 <p className="text-sm font-medium">
-                  A aparut o eroare. Te rugam sa verifici datele si sa incerci din nou.
+                  {errorMsg || 'A aparut o eroare. Te rugam sa verifici datele si sa incerci din nou.'}
                 </p>
               </div>
             )}
@@ -564,7 +653,7 @@ export default function TutorRegistrationPage() {
               ) : (
                 <>
                   <Send className="w-5 h-5" />
-                  Trimite aplicatia
+                  Creeaza contul de profesor
                 </>
               )}
             </button>

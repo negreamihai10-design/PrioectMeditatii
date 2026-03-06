@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { GraduationCap, Menu, X, LogIn } from 'lucide-react';
+import { GraduationCap, Menu, X, LogIn, User, Coins } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
-const navLinks = [
+const publicLinks = [
   { label: 'Materii', href: '/materii' },
   { label: 'Cum functioneaza', href: '/#cum-functioneaza' },
   { label: 'Profesori', href: '/#profesori' },
   { label: 'Testimoniale', href: '/#testimoniale' },
+];
+
+const guestLinks = [
   { label: 'Devino Profesor', href: '/inscriere-profesor' },
   { label: 'Devino Elev', href: '/inscriere-elev' },
 ];
@@ -17,7 +20,7 @@ export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const isHome = location.pathname === '/';
-  const { user, signOut, openLogin } = useAuth();
+  const { user, role, signOut, openLogin } = useAuth();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -41,6 +44,39 @@ export default function Header() {
           ? 'text-gray-600 hover:text-primary-700 hover:bg-primary-50'
           : 'text-white/80 hover:text-white hover:bg-white/10'
     }`;
+
+  const navLinks = [
+    ...publicLinks,
+    ...(user ? [] : guestLinks),
+  ];
+
+  const tutorLinks = role === 'tutor'
+    ? [
+        { label: 'Profilul Meu', href: '/profil', icon: User },
+        { label: 'Credite', href: '/credite', icon: Coins },
+      ]
+    : [];
+
+  const renderLink = (link: { label: string; href: string }, mobile = false) => {
+    const isRouterLink = !link.href.includes('#');
+    const isActive = location.pathname === link.href;
+    const className = mobile
+      ? 'block px-4 py-3 text-gray-700 hover:text-primary-700 hover:bg-primary-50 rounded-lg font-medium transition-colors'
+      : linkClass(isActive);
+
+    if (isRouterLink) {
+      return (
+        <Link key={link.href} to={link.href} className={className}>
+          {link.label}
+        </Link>
+      );
+    }
+    return (
+      <a key={link.href} href={link.href} className={className}>
+        {link.label}
+      </a>
+    );
+  };
 
   return (
     <header
@@ -73,30 +109,18 @@ export default function Header() {
           </a>
 
           <nav className="hidden lg:flex items-center gap-1">
-            {navLinks.map((link) => {
-              const isRouterLink = !link.href.includes('#');
-              const isActive = location.pathname === link.href;
-              if (isRouterLink) {
-                return (
-                  <Link
-                    key={link.href}
-                    to={link.href}
-                    className={linkClass(isActive)}
-                  >
-                    {link.label}
-                  </Link>
-                );
-              }
-              return (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  className={linkClass(false)}
-                >
-                  {link.label}
-                </a>
-              );
-            })}
+            {navLinks.map((link) => renderLink(link))}
+
+            {tutorLinks.map((link) => (
+              <Link
+                key={link.href}
+                to={link.href}
+                className={`inline-flex items-center gap-1.5 ${linkClass(location.pathname === link.href)}`}
+              >
+                <link.icon className="w-4 h-4" />
+                {link.label}
+              </Link>
+            ))}
 
             {user ? (
               <button
@@ -134,29 +158,18 @@ export default function Header() {
       {mobileOpen && (
         <div className="lg:hidden bg-white border-t border-gray-100 shadow-xl">
           <div className="px-4 py-4 space-y-1">
-            {navLinks.map((link) => {
-              const isRouterLink = !link.href.includes('#');
-              if (isRouterLink) {
-                return (
-                  <Link
-                    key={link.href}
-                    to={link.href}
-                    className="block px-4 py-3 text-gray-700 hover:text-primary-700 hover:bg-primary-50 rounded-lg font-medium transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                );
-              }
-              return (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  className="block px-4 py-3 text-gray-700 hover:text-primary-700 hover:bg-primary-50 rounded-lg font-medium transition-colors"
-                >
-                  {link.label}
-                </a>
-              );
-            })}
+            {navLinks.map((link) => renderLink(link, true))}
+
+            {tutorLinks.map((link) => (
+              <Link
+                key={link.href}
+                to={link.href}
+                className="flex items-center gap-2 px-4 py-3 text-gray-700 hover:text-primary-700 hover:bg-primary-50 rounded-lg font-medium transition-colors"
+              >
+                <link.icon className="w-4 h-4" />
+                {link.label}
+              </Link>
+            ))}
 
             {user ? (
               <button

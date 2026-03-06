@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { X, LogIn, AlertCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
@@ -61,7 +62,7 @@ export default function LoginModal() {
             </div>
             <h2 className="text-2xl font-extrabold text-gray-900">Autentificare</h2>
             <p className="mt-2 text-sm text-gray-500">
-              Conecteaza-te la contul tau de elev
+              Conecteaza-te la contul tau
             </p>
           </div>
 
@@ -119,16 +120,27 @@ export default function LoginModal() {
             </button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-gray-500">
-            Nu ai cont?{' '}
-            <a
-              href="/inscriere-elev"
-              onClick={() => closeLogin()}
-              className="font-semibold text-primary-600 hover:text-primary-700"
-            >
-              Inscrie-te ca elev
-            </a>
-          </p>
+          <div className="mt-6 pt-6 border-t border-gray-100">
+            <p className="text-center text-sm text-gray-500 mb-3">
+              Nu ai cont? Inscrie-te ca:
+            </p>
+            <div className="flex gap-3">
+              <Link
+                to="/inscriere-elev"
+                onClick={() => closeLogin()}
+                className="flex-1 text-center px-4 py-2.5 bg-primary-50 text-primary-700 font-semibold rounded-xl hover:bg-primary-100 transition-colors text-sm"
+              >
+                Elev
+              </Link>
+              <Link
+                to="/inscriere-profesor"
+                onClick={() => closeLogin()}
+                className="flex-1 text-center px-4 py-2.5 bg-accent-50 text-accent-700 font-semibold rounded-xl hover:bg-accent-100 transition-colors text-sm"
+              >
+                Profesor
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     </div>

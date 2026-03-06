@@ -89,6 +89,9 @@ export default function StudentRegistrationPage() {
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: form.email,
       password: form.password,
+      options: {
+        data: { role: 'student' },
+      },
     });
 
     if (authError || !authData.user) {
