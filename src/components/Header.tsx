@@ -45,8 +45,12 @@ export default function Header() {
           : 'text-white/80 hover:text-white hover:bg-white/10'
     }`;
 
+  const visiblePublicLinks = role === 'tutor'
+    ? publicLinks.filter((l) => l.href !== '/#cum-functioneaza' && l.href !== '/#testimoniale')
+    : publicLinks;
+
   const navLinks = [
-    ...publicLinks,
+    ...visiblePublicLinks,
     ...(user ? [] : guestLinks),
   ];
 

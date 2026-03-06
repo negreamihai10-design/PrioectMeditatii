@@ -10,6 +10,7 @@ import TutorRegistrationPage from './pages/TutorRegistrationPage';
 import StudentRegistrationPage from './pages/StudentRegistrationPage';
 import TutorProfilePage from './pages/TutorProfilePage';
 import CreditsPage from './pages/CreditsPage';
+import CheckoutPage from './pages/CheckoutPage';
 import ScrollToTop from './components/ScrollToTop';
 
 export default function App() {
@@ -27,6 +28,7 @@ export default function App() {
           <Route path="/inscriere-elev" element={<StudentRegistrationPage />} />
           <Route path="/profil" element={<TutorProfilePage />} />
           <Route path="/credite" element={<CreditsPage />} />
+          <Route path="/credite/plata" element={<CheckoutPage />} />
         </Routes>
         <Footer />
       </div>
