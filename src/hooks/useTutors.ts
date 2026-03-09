@@ -2,6 +2,25 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import type { TutorRow, TutorWithSubjects } from '../types/database';
 
+async function overlayProfileAvatars(tutors: TutorRow[]): Promise<TutorRow[]> {
+  if (tutors.length === 0) return tutors;
+  const ids = tutors.map((t) => t.id);
+  const { data: profiles } = await supabase
+    .from('tutor_profiles')
+    .select('id, avatar_url')
+    .in('id', ids);
+  if (!profiles || profiles.length === 0) return tutors;
+  const avatarMap = new Map(
+    profiles
+      .filter((p) => p.avatar_url)
+      .map((p) => [p.id, p.avatar_url as string])
+  );
+  return tutors.map((t) => {
+    const avatar = avatarMap.get(t.id);
+    return avatar ? { ...t, image: avatar } : t;
+  });
+}
+
 export function useFeaturedTutors() {
   const [tutors, setTutors] = useState<TutorRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -13,8 +32,9 @@ export function useFeaturedTutors() {
       .eq('is_featured', true)
       .order('rating', { ascending: false })
       .limit(4)
-      .then(({ data }) => {
-        setTutors(data ?? []);
+      .then(async ({ data }) => {
+        const list = (data ?? []) as TutorRow[];
+        setTutors(await overlayProfileAvatars(list));
         setLoading(false);
       });
   }, []);
@@ -37,8 +57,9 @@ export function useTutorsBySubject(subjectName: string | undefined) {
       .select('*, tutor_subjects!inner(subject_id, subjects!inner(name))')
       .eq('tutor_subjects.subjects.name', subjectName)
       .order('rating', { ascending: false })
-      .then(({ data }) => {
-        setTutors((data as TutorRow[] | null) ?? []);
+      .then(async ({ data }) => {
+        const list = (data as TutorRow[] | null) ?? [];
+        setTutors(await overlayProfileAvatars(list));
         setLoading(false);
       });
   }, [subjectName]);
@@ -61,15 +82,17 @@ export function useTutorById(id: string | undefined) {
       .select('*, tutor_subjects(subject_id, subjects(id, name, slug))')
       .eq('id', id)
       .maybeSingle()
-      .then(({ data }) => {
+      .then(async ({ data }) => {
         if (data) {
           const { tutor_subjects, ...rest } = data as TutorRow & {
             tutor_subjects: { subject_id: string; subjects: { id: string; name: string; slug: string } }[];
           };
-          setTutor({
+          const base: TutorWithSubjects = {
             ...rest,
             subjects: tutor_subjects?.map((ts) => ts.subjects) ?? [],
-          });
+          };
+          const [overlaid] = await overlayProfileAvatars([base]);
+          setTutor({ ...base, image: overlaid.image });
         }
         setLoading(false);
       });

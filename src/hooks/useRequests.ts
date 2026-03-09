@@ -112,3 +112,7 @@ export async function sendMessage(payload: {
 }) {
   return supabase.from('request_messages').insert(payload);
 }
+
+export async function deleteRequest(requestId: string) {
+  return supabase.from('tutor_requests').delete().eq('id', requestId);
+}
