@@ -13,6 +13,7 @@ import CreditsPage from './pages/CreditsPage';
 import CheckoutPage from './pages/CheckoutPage';
 import PromotionPage from './pages/PromotionPage';
 import RequestsPage from './pages/RequestsPage';
+import TutorPublicProfilePage from './pages/TutorPublicProfilePage';
 import ScrollToTop from './components/ScrollToTop';
 
 export default function App() {
@@ -33,6 +34,7 @@ export default function App() {
           <Route path="/credite/plata" element={<CheckoutPage />} />
           <Route path="/promovare" element={<PromotionPage />} />
           <Route path="/cereri" element={<RequestsPage />} />
+          <Route path="/profesor/:id" element={<TutorPublicProfilePage />} />
         </Routes>
         <Footer />
       </div>

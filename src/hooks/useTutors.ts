@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import type { TutorRow } from '../types/database';
+import type { TutorRow, TutorWithSubjects } from '../types/database';
 
 export function useFeaturedTutors() {
   const [tutors, setTutors] = useState<TutorRow[]>([]);
@@ -44,6 +44,38 @@ export function useTutorsBySubject(subjectName: string | undefined) {
   }, [subjectName]);
 
   return { tutors, loading };
+}
+
+export function useTutorById(id: string | undefined) {
+  const [tutor, setTutor] = useState<TutorWithSubjects | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!id) {
+      setLoading(false);
+      return;
+    }
+
+    supabase
+      .from('tutors')
+      .select('*, tutor_subjects(subject_id, subjects(id, name, slug))')
+      .eq('id', id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) {
+          const { tutor_subjects, ...rest } = data as TutorRow & {
+            tutor_subjects: { subject_id: string; subjects: { id: string; name: string; slug: string } }[];
+          };
+          setTutor({
+            ...rest,
+            subjects: tutor_subjects?.map((ts) => ts.subjects) ?? [],
+          });
+        }
+        setLoading(false);
+      });
+  }, [id]);
+
+  return { tutor, loading };
 }
 
 export function useTutorCountBySubject(subjectName: string): number {

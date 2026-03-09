@@ -223,89 +223,96 @@ export default function SubjectDetailPage() {
               {filtered.map((tutor) => (
                 <div
                   key={tutor.id}
-                  className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100"
+                  className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100 flex flex-col"
                 >
-                  <div className="relative h-56 overflow-hidden">
-                    <img
-                      src={tutor.image}
-                      alt={tutor.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                    <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
-                      <span className="px-3 py-1 bg-white/90 backdrop-blur-sm text-sm font-semibold text-gray-900 rounded-lg">
-                        {tutor.price}
-                      </span>
-                      <div className="flex items-center gap-1 px-2.5 py-1 bg-white/90 backdrop-blur-sm rounded-lg">
-                        <Star className="w-4 h-4 text-accent-500 fill-accent-500" />
-                        <span className="text-sm font-bold text-gray-900">
-                          {tutor.rating}
+                  <Link to={`/profesor/${tutor.id}`} className="block">
+                    <div className="relative h-56 overflow-hidden">
+                      <img
+                        src={tutor.image}
+                        alt={tutor.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                      <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
+                        <span className="px-3 py-1 bg-white/90 backdrop-blur-sm text-sm font-semibold text-gray-900 rounded-lg">
+                          {tutor.price}
                         </span>
+                        <div className="flex items-center gap-1 px-2.5 py-1 bg-white/90 backdrop-blur-sm rounded-lg">
+                          <Star className="w-4 h-4 text-accent-500 fill-accent-500" />
+                          <span className="text-sm font-bold text-gray-900">
+                            {tutor.rating}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="p-5">
-                    <h3 className="font-bold text-gray-900 text-lg">{tutor.name}</h3>
+                    <div className="p-5 pb-0">
+                      <h3 className="font-bold text-gray-900 text-lg">{tutor.name}</h3>
 
-                    <div className="mt-2 flex items-center gap-4 text-sm text-gray-500">
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5" />
-                        {tutor.experience}
-                      </span>
-                    </div>
-                    <div className="mt-1 flex items-center gap-1 text-sm text-gray-500">
-                      <MapPin className="w-3.5 h-3.5" />
-                      {tutor.location}
-                    </div>
-
-                    <div className="mt-3 flex items-center gap-3">
-                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 text-xs font-medium rounded-lg">
-                        <Wifi className="w-3 h-3" />
-                        {modeLabel(tutor.mode)}
-                      </span>
-                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-50 text-emerald-700 text-xs font-medium rounded-lg">
-                        <Users className="w-3 h-3" />
-                        {sessionLabel(tutor.session_type)}
-                      </span>
-                    </div>
-
-                    <p className="mt-3 text-sm text-gray-500 leading-relaxed line-clamp-2">
-                      {tutor.bio}
-                    </p>
-
-                    <div className="mt-3 flex flex-wrap gap-1.5">
-                      {tutor.specialties.map((s) => (
-                        <span
-                          key={s}
-                          className="px-2.5 py-1 bg-primary-50 text-primary-700 text-xs font-medium rounded-lg"
-                        >
-                          {s}
+                      <div className="mt-2 flex items-center gap-4 text-sm text-gray-500">
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3.5 h-3.5" />
+                          {tutor.experience}
                         </span>
-                      ))}
-                    </div>
+                      </div>
+                      <div className="mt-1 flex items-center gap-1 text-sm text-gray-500">
+                        <MapPin className="w-3.5 h-3.5" />
+                        {tutor.location}
+                      </div>
 
-                    <div className="mt-3">
-                      <p className="text-xs text-gray-400">
-                        Disponibil: {tutor.days.slice(0, 3).join(', ')}
-                        {tutor.days.length > 3 && ` +${tutor.days.length - 3}`}
-                        {' | '}
-                        {tutor.hours[0]}
-                        {tutor.hours.length > 1 && ` +${tutor.hours.length - 1}`}
+                      <div className="mt-3 flex items-center gap-3">
+                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 text-xs font-medium rounded-lg">
+                          <Wifi className="w-3 h-3" />
+                          {modeLabel(tutor.mode)}
+                        </span>
+                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-50 text-emerald-700 text-xs font-medium rounded-lg">
+                          <Users className="w-3 h-3" />
+                          {sessionLabel(tutor.session_type)}
+                        </span>
+                      </div>
+
+                      <p className="mt-3 text-sm text-gray-500 leading-relaxed line-clamp-2">
+                        {tutor.bio}
                       </p>
-                    </div>
 
-                    <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
+                      <div className="mt-3 flex flex-wrap gap-1.5">
+                        {tutor.specialties.map((s) => (
+                          <span
+                            key={s}
+                            className="px-2.5 py-1 bg-primary-50 text-primary-700 text-xs font-medium rounded-lg"
+                          >
+                            {s}
+                          </span>
+                        ))}
+                      </div>
+
+                      <div className="mt-3">
+                        <p className="text-xs text-gray-400">
+                          Disponibil: {tutor.days.slice(0, 3).join(', ')}
+                          {tutor.days.length > 3 && ` +${tutor.days.length - 3}`}
+                          {' | '}
+                          {tutor.hours[0]}
+                          {tutor.hours.length > 1 && ` +${tutor.hours.length - 1}`}
+                        </p>
+                      </div>
+                    </div>
+                  </Link>
+
+                  <div className="mt-auto p-5 pt-4">
+                    <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
                       <p className="text-xs text-gray-400">
                         {tutor.reviews} recenzii verificate
                       </p>
                       {role !== 'tutor' && (
                         <button
-                          onClick={() => setContactTutor({ id: tutor.id, name: tutor.name })}
-                          className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary-600 hover:text-primary-700 transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setContactTutor({ id: tutor.id, name: tutor.name });
+                          }}
+                          className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-xl transition-all duration-200 hover:shadow-md"
                         >
                           <MessageCircle className="w-4 h-4" />
-                          Contacteaza
+                          Solicita o intalnire
                         </button>
                       )}
                     </div>

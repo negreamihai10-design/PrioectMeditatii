@@ -37,8 +37,9 @@ export default function Tutors() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {tutors.map((tutor) => (
-              <div
+              <Link
                 key={tutor.id}
+                to={`/profesor/${tutor.id}`}
                 className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100"
               >
                 <div className="relative h-56 overflow-hidden">
@@ -85,7 +86,7 @@ export default function Tutors() {
                     {tutor.reviews} recenzii verificate
                   </p>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         )}
