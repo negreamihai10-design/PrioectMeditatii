@@ -6,14 +6,16 @@ import {
   MapPin,
   Clock,
   ArrowRight,
-  ChevronRight,
   Wifi,
   Users,
   Search,
+  MessageCircle,
 } from 'lucide-react';
 import { useSubjects, useSubjectBySlug } from '../hooks/useSubjects';
 import { useTutorsBySubject } from '../hooks/useTutors';
+import { useAuth } from '../contexts/AuthContext';
 import SubjectIcon from '../components/SubjectIcon';
+import ContactTutorModal from '../components/ContactTutorModal';
 import TutorFilters, { type FilterState, emptyFilters } from '../components/TutorFilters';
 import type { TutorRow } from '../types/database';
 
@@ -55,7 +57,9 @@ export default function SubjectDetailPage() {
   const { subject, loading: subjectLoading } = useSubjectBySlug(slug);
   const { subjects: allSubjects } = useSubjects();
   const { tutors: allTutors, loading: tutorsLoading } = useTutorsBySubject(subject?.name);
+  const { role } = useAuth();
   const [filters, setFilters] = useState<FilterState>(emptyFilters);
+  const [contactTutor, setContactTutor] = useState<{ id: string; name: string } | null>(null);
 
   const filtered = useMemo(() => applyFilters(allTutors, filters), [allTutors, filters]);
   const otherSubjects = allSubjects.filter((s) => s.slug !== slug).slice(0, 4);
@@ -295,13 +299,15 @@ export default function SubjectDetailPage() {
                       <p className="text-xs text-gray-400">
                         {tutor.reviews} recenzii verificate
                       </p>
-                      <Link
-                        to="/inscriere-profesor"
-                        className="text-sm font-semibold text-primary-600 hover:text-primary-700 flex items-center gap-1 transition-colors"
-                      >
-                        Devino profesor
-                        <ChevronRight className="w-4 h-4" />
-                      </Link>
+                      {role !== 'tutor' && (
+                        <button
+                          onClick={() => setContactTutor({ id: tutor.id, name: tutor.name })}
+                          className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary-600 hover:text-primary-700 transition-colors"
+                        >
+                          <MessageCircle className="w-4 h-4" />
+                          Contacteaza
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -341,6 +347,17 @@ export default function SubjectDetailPage() {
             </div>
           </div>
         </section>
+      )}
+
+      {subject && (
+        <ContactTutorModal
+          open={contactTutor !== null}
+          onClose={() => setContactTutor(null)}
+          tutorId={contactTutor?.id ?? ''}
+          tutorName={contactTutor?.name ?? ''}
+          subjectId={subject.id}
+          subjectName={subject.name}
+        />
       )}
     </>
   );

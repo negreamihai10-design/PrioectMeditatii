@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { GraduationCap, Menu, X, LogIn, User, Coins, Megaphone } from 'lucide-react';
+import { GraduationCap, Menu, X, LogIn, User, Coins, Megaphone, Inbox } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useCreditBalance } from '../hooks/useCredits';
 
@@ -51,7 +51,8 @@ export default function Header() {
     ? publicLinks.filter((l) =>
         l.href !== '/#cum-functioneaza' &&
         l.href !== '/#testimoniale' &&
-        l.href !== '/materii'
+        l.href !== '/materii' &&
+        l.href !== '/#profesori'
       )
     : publicLinks;
 
@@ -63,6 +64,7 @@ export default function Header() {
   const tutorLinks = role === 'tutor'
     ? [
         { label: 'Profilul Meu', href: '/profil', icon: User },
+        { label: 'Cereri', href: '/cereri', icon: Inbox },
         { label: 'Credite', href: '/credite', icon: Coins },
         { label: 'Promovare', href: '/promovare', icon: Megaphone },
       ]
