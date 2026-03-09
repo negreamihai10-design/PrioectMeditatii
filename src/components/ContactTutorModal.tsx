@@ -67,6 +67,21 @@ export default function ContactTutorModal({
       return;
     }
 
+    fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-student-request`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tutor_id: tutorId,
+          student_name: name.trim(),
+          student_email: email.trim(),
+          subject_name: subjectName,
+          message: message.trim(),
+        }),
+      }
+    ).catch(() => {});
+
     setStatus('success');
   };
 

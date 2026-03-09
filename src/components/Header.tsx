@@ -22,7 +22,7 @@ export default function Header() {
   const location = useLocation();
   const isHome = location.pathname === '/';
   const { user, role, signOut, openLogin } = useAuth();
-  const creditBalance = useCreditBalance(user?.id, role);
+  const { balance: creditBalance } = useCreditBalance(user?.id, role);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);

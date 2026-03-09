@@ -1,23 +1,30 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import {
   Inbox,
   Clock,
   CheckCircle,
   XCircle,
-  Send,
+  Lock,
+  Unlock,
   Mail,
   User,
   BookOpen,
   MessageCircle,
   Filter,
+  Coins,
+  AlertCircle,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useCreditBalance, spendCredits } from '../hooks/useCredits';
 import {
   useTutorRequests,
-  replyToRequest,
+  unlockRequest,
   type TutorRequestWithSubject,
 } from '../hooks/useRequests';
+import RequestChat from '../components/RequestChat';
+
+const UNLOCK_COST = 1;
 
 type StatusFilter = 'all' | 'pending' | 'accepted' | 'declined';
 
@@ -27,103 +34,102 @@ const statusConfig: Record<string, { label: string; color: string; icon: typeof 
   declined: { label: 'Refuzat', color: 'bg-red-50 text-red-700 border-red-200', icon: XCircle },
 };
 
-function ReplyModal({
+function LockedCard({
   request,
-  onClose,
-  onSent,
+  onUnlock,
+  unlocking,
+  balance,
 }: {
   request: TutorRequestWithSubject;
-  onClose: () => void;
-  onSent: () => void;
+  onUnlock: () => void;
+  unlocking: boolean;
+  balance: number;
 }) {
-  const [reply, setReply] = useState('');
-  const [action, setAction] = useState<'accepted' | 'declined' | null>(null);
-  const [sending, setSending] = useState(false);
-
-  const handleSend = async (status: 'accepted' | 'declined') => {
-    setSending(true);
-    setAction(status);
-    await replyToRequest(request.id, reply.trim(), status);
-    setSending(false);
-    onSent();
-  };
+  const config = statusConfig[request.status] ?? statusConfig.pending;
+  const StatusIcon = config.icon;
+  const date = new Date(request.created_at);
+  const formattedDate = date.toLocaleDateString('ro-RO', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+  const hasCredits = balance >= UNLOCK_COST;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-100">
-          <h3 className="text-lg font-bold text-gray-900">Raspunde la cerere</h3>
-          <p className="text-sm text-gray-500">
-            De la {request.student_name} &middot; {request.subjects?.name}
-          </p>
-        </div>
-
-        <div className="px-6 py-4">
-          <div className="bg-gray-50 rounded-xl p-4 mb-4">
-            <p className="text-sm text-gray-600 italic">"{request.message}"</p>
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="p-6">
+        <div className="flex items-start justify-between gap-4 mb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+              <Lock className="w-5 h-5 text-gray-400" />
+            </div>
+            <div>
+              <h3 className="font-bold text-gray-400">Cerere noua</h3>
+              <p className="text-sm text-gray-400 flex items-center gap-1">
+                <BookOpen className="w-3.5 h-3.5" />
+                {request.subjects?.name ?? 'Necunoscut'}
+              </p>
+            </div>
           </div>
-
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
-            Raspunsul tau
-          </label>
-          <textarea
-            value={reply}
-            onChange={(e) => setReply(e.target.value)}
-            rows={4}
-            placeholder="Scrie un mesaj catre elev..."
-            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all resize-none"
-          />
+          <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border ${config.color}`}>
+            <StatusIcon className="w-3.5 h-3.5" />
+            {config.label}
+          </span>
         </div>
 
-        <div className="px-6 py-4 border-t border-gray-100 flex items-center gap-3">
+        <div className="text-xs text-gray-400 mb-4">{formattedDate}</div>
+
+        <div className="relative bg-gray-50 rounded-xl p-4 mb-4 overflow-hidden">
+          <div className="blur-sm select-none pointer-events-none">
+            <p className="text-sm text-gray-700">
+              Aceasta cerere contine informatii despre elev si mesajul sau. Deblocheaza cererea pentru a vedea detaliile complete si a incepe o conversatie.
+            </p>
+          </div>
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-50/60">
+            <Lock className="w-6 h-6 text-gray-300" />
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
           <button
-            onClick={() => handleSend('accepted')}
-            disabled={sending}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white font-semibold rounded-xl transition-colors"
+            onClick={onUnlock}
+            disabled={unlocking || !hasCredits}
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all duration-200 text-sm hover:shadow-lg hover:shadow-primary-600/25"
           >
-            {sending && action === 'accepted' ? (
-              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            {unlocking ? (
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             ) : (
               <>
-                <CheckCircle className="w-4 h-4" />
-                Accepta
+                <Unlock className="w-4 h-4" />
+                Deblocheaza ({UNLOCK_COST} credit)
               </>
             )}
           </button>
-          <button
-            onClick={() => handleSend('declined')}
-            disabled={sending}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-semibold rounded-xl transition-colors"
-          >
-            {sending && action === 'declined' ? (
-              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            ) : (
-              <>
-                <XCircle className="w-4 h-4" />
-                Refuza
-              </>
-            )}
-          </button>
-          <button
-            onClick={onClose}
-            className="px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-colors"
-          >
-            Anuleaza
-          </button>
+          {!hasCredits && (
+            <Link
+              to="/credite"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-accent-600 hover:text-accent-700 transition-colors"
+            >
+              <Coins className="w-4 h-4" />
+              Cumpara credite
+            </Link>
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-function RequestCard({
+function UnlockedCard({
   request,
-  onReply,
+  userId,
 }: {
   request: TutorRequestWithSubject;
-  onReply: () => void;
+  userId: string;
 }) {
+  const [chatOpen, setChatOpen] = useState(false);
   const config = statusConfig[request.status] ?? statusConfig.pending;
   const StatusIcon = config.icon;
   const date = new Date(request.created_at);
@@ -151,10 +157,16 @@ function RequestCard({
               </p>
             </div>
           </div>
-          <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border ${config.color}`}>
-            <StatusIcon className="w-3.5 h-3.5" />
-            {config.label}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-50 text-emerald-600 text-xs font-medium rounded-lg">
+              <Unlock className="w-3 h-3" />
+              Deblocat
+            </span>
+            <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border ${config.color}`}>
+              <StatusIcon className="w-3.5 h-3.5" />
+              {config.label}
+            </span>
+          </div>
         </div>
 
         <div className="flex items-center gap-2 mb-3">
@@ -169,26 +181,24 @@ function RequestCard({
           <p className="text-sm text-gray-700 leading-relaxed">{request.message}</p>
         </div>
 
-        {request.tutor_reply && (
-          <div className="bg-primary-50 rounded-xl p-4 mb-4 border border-primary-100">
-            <p className="text-xs font-semibold text-primary-700 mb-1 flex items-center gap-1">
-              <Send className="w-3 h-3" />
-              Raspunsul tau
-            </p>
-            <p className="text-sm text-primary-900 leading-relaxed">{request.tutor_reply}</p>
-          </div>
-        )}
-
-        {request.status === 'pending' && (
-          <button
-            onClick={onReply}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-xl transition-colors text-sm"
-          >
-            <MessageCircle className="w-4 h-4" />
-            Raspunde
-          </button>
-        )}
+        <button
+          onClick={() => setChatOpen(!chatOpen)}
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-xl transition-all duration-200 text-sm hover:shadow-lg hover:shadow-primary-600/25"
+        >
+          <MessageCircle className="w-4 h-4" />
+          {chatOpen ? 'Inchide conversatia' : 'Deschide conversatia'}
+        </button>
       </div>
+
+      {chatOpen && (
+        <div className="border-t border-gray-100">
+          <RequestChat
+            request={request}
+            currentUserId={userId}
+            currentRole="tutor"
+          />
+        </div>
+      )}
     </div>
   );
 }
@@ -197,8 +207,10 @@ export default function RequestsPage() {
   const navigate = useNavigate();
   const { user, role, loading: authLoading } = useAuth();
   const { requests, loading, refresh } = useTutorRequests(user?.id);
+  const { balance, refreshCredits } = useCreditBalance(user?.id, role);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
-  const [replyingTo, setReplyingTo] = useState<TutorRequestWithSubject | null>(null);
+  const [unlockingId, setUnlockingId] = useState<string | null>(null);
+  const [error, setError] = useState('');
 
   if (!authLoading && (!user || role !== 'tutor')) {
     navigate('/');
@@ -219,20 +231,68 @@ export default function RequestsPage() {
     { key: 'declined', label: 'Refuzate' },
   ];
 
+  const handleUnlock = async (request: TutorRequestWithSubject) => {
+    if (!user) return;
+    setError('');
+    setUnlockingId(request.id);
+
+    if (balance < UNLOCK_COST) {
+      setError('Nu ai suficiente credite. Cumpara credite pentru a debloca cereri.');
+      setUnlockingId(null);
+      return;
+    }
+
+    const { error: creditError } = await spendCredits(
+      user.id,
+      UNLOCK_COST,
+      `Deblocare cerere de la ${request.subjects?.name ?? 'elev'}`
+    );
+
+    if (creditError) {
+      setError('Eroare la procesarea creditelor. Incearca din nou.');
+      setUnlockingId(null);
+      return;
+    }
+
+    const { error: unlockError } = await unlockRequest(request.id);
+
+    if (unlockError) {
+      setError('Eroare la deblocarea cererii. Incearca din nou.');
+      setUnlockingId(null);
+      return;
+    }
+
+    await Promise.all([refresh(), refreshCredits()]);
+    setUnlockingId(null);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 pt-24 pb-16">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2.5 rounded-xl bg-primary-600 text-white">
-              <Inbox className="w-6 h-6" />
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-primary-600 text-white">
+                <Inbox className="w-6 h-6" />
+              </div>
+              <h1 className="text-3xl font-extrabold text-gray-900">Cereri de la elevi</h1>
             </div>
-            <h1 className="text-3xl font-extrabold text-gray-900">Cereri de la elevi</h1>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-accent-50 text-accent-700 border border-accent-200 rounded-lg text-xs font-bold">
+              <Coins className="w-3.5 h-3.5" />
+              {balance} credite
+            </div>
           </div>
           <p className="text-gray-500">
-            Gestioneaza cererile primite de la elevi care vor sa lucreze cu tine.
+            Deblocheaza cererile cu credite pentru a vedea detaliile elevilor si a incepe o conversatie.
           </p>
         </div>
+
+        {error && (
+          <div className="mb-6 flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-100 rounded-xl text-red-700 text-sm">
+            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            {error}
+          </div>
+        )}
 
         <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2">
           <Filter className="w-4 h-4 text-gray-400 flex-shrink-0" />
@@ -282,27 +342,26 @@ export default function RequestsPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {filtered.map((req) => (
-              <RequestCard
-                key={req.id}
-                request={req}
-                onReply={() => setReplyingTo(req)}
-              />
-            ))}
+            {filtered.map((req) =>
+              req.unlocked ? (
+                <UnlockedCard
+                  key={req.id}
+                  request={req}
+                  userId={user!.id}
+                />
+              ) : (
+                <LockedCard
+                  key={req.id}
+                  request={req}
+                  onUnlock={() => handleUnlock(req)}
+                  unlocking={unlockingId === req.id}
+                  balance={balance}
+                />
+              )
+            )}
           </div>
         )}
       </div>
-
-      {replyingTo && (
-        <ReplyModal
-          request={replyingTo}
-          onClose={() => setReplyingTo(null)}
-          onSent={() => {
-            setReplyingTo(null);
-            refresh();
-          }}
-        />
-      )}
     </div>
   );
 }

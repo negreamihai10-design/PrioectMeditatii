@@ -11,12 +11,22 @@ export interface TutorRequest {
   message: string;
   status: string;
   tutor_reply: string;
+  unlocked: boolean;
   created_at: string;
   updated_at: string;
 }
 
 export interface TutorRequestWithSubject extends TutorRequest {
   subjects: { name: string } | null;
+}
+
+export interface RequestMessage {
+  id: string;
+  request_id: string;
+  sender_id: string;
+  sender_role: string;
+  body: string;
+  created_at: string;
 }
 
 export function useTutorRequests(tutorId: string | undefined) {
@@ -62,4 +72,43 @@ export async function replyToRequest(
     .from('tutor_requests')
     .update({ tutor_reply: reply, status, updated_at: new Date().toISOString() })
     .eq('id', requestId);
+}
+
+export async function unlockRequest(requestId: string) {
+  return supabase
+    .from('tutor_requests')
+    .update({ unlocked: true, updated_at: new Date().toISOString() })
+    .eq('id', requestId);
+}
+
+export function useRequestMessages(requestId: string | null) {
+  const [messages, setMessages] = useState<RequestMessage[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const refresh = useCallback(async () => {
+    if (!requestId) return;
+    setLoading(true);
+    const { data } = await supabase
+      .from('request_messages')
+      .select('*')
+      .eq('request_id', requestId)
+      .order('created_at', { ascending: true });
+    setMessages((data as RequestMessage[] | null) ?? []);
+    setLoading(false);
+  }, [requestId]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  return { messages, loading, refreshMessages: refresh };
+}
+
+export async function sendMessage(payload: {
+  request_id: string;
+  sender_id: string;
+  sender_role: string;
+  body: string;
+}) {
+  return supabase.from('request_messages').insert(payload);
 }
